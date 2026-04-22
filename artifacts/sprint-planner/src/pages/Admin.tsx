@@ -1,4 +1,4 @@
-import { useGetAdminStats, useGetRecentActivity, useListPrds } from "@workspace/api-client-react";
+import { useGetAdminStats, useGetRecentActivity, useListPrds, useListFeatures } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
@@ -32,9 +32,28 @@ export default function Admin() {
   const { data: stats, isLoading: statsLoading } = useGetAdminStats();
   const { data: activity, isLoading: activityLoading } = useGetRecentActivity();
   const { data: prds } = useListPrds();
+  const { data: features } = useListFeatures();
   const [, navigate] = useLocation();
 
   const prdById = new Map((prds || []).map(p => [p.id, p]));
+  const prdByFeatureId = new Map((prds || []).map(p => [p.featureId, p]));
+
+  const ownerData = (() => {
+    const map = new Map<string, { features: number; tasks: number; effortPoints: number }>();
+    for (const f of (features || [])) {
+      const owner = f.ownerName || "Unassigned";
+      const prd = prdByFeatureId.get(f.id);
+      const existing = map.get(owner) || { features: 0, tasks: 0, effortPoints: 0 };
+      map.set(owner, {
+        features: existing.features + 1,
+        tasks: existing.tasks + (prd?.totalTasks ?? 0),
+        effortPoints: existing.effortPoints + (prd?.totalEffortPoints ?? 0),
+      });
+    }
+    return Array.from(map.entries())
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.features - a.features);
+  })();
 
   const priorityData = stats ? [
     { name: "Critical", value: stats.tasksByPriority.critical },
@@ -112,6 +131,56 @@ export default function Admin() {
           )}
         </>
       ) : null}
+
+      {ownerData.length > 0 && (
+        <div className="bg-card border border-card-border rounded-xl p-5 mb-8">
+          <h3 className="text-sm font-semibold text-foreground mb-1">Features by Owner</h3>
+          <p className="text-xs text-muted-foreground mb-4">Tasks and effort points broken down per feature owner</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-card-border">
+                  <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider pb-2 pr-6">Owner</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wider pb-2 pr-6">Features</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wider pb-2 pr-6">Tasks</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wider pb-2">Effort pts</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {ownerData.map(row => (
+                  <tr key={row.name}>
+                    <td className="py-2.5 pr-6">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-semibold text-primary">{row.name[0].toUpperCase()}</span>
+                        </div>
+                        <span className="text-foreground font-medium">{row.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 pr-6 text-right tabular-nums text-foreground">{row.features}</td>
+                    <td className="py-2.5 pr-6 text-right tabular-nums text-blue-400">{row.tasks}</td>
+                    <td className="py-2.5 text-right tabular-nums text-amber-400">{row.effortPoints}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {ownerData.length > 1 && (
+            <div className="mt-4">
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={ownerData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                  <XAxis dataKey="name" tick={{ fill: "hsl(213 20% 55%)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: "hsl(213 20% 55%)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ background: "hsl(226 24% 11%)", border: "1px solid hsl(226 18% 18%)", borderRadius: "8px", color: "hsl(213 31% 91%)" }} />
+                  <Legend wrapperStyle={{ fontSize: 11, color: "hsl(213 20% 55%)" }} />
+                  <Bar dataKey="features" name="Features" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="tasks" name="Tasks" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="bg-card border border-card-border rounded-xl overflow-hidden">
         <div className="px-5 py-4 border-b border-card-border">

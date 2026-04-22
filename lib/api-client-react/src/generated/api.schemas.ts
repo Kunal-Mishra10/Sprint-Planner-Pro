@@ -22,6 +22,7 @@ export interface Feature {
   id: number;
   title: string;
   description: string;
+  ownerName?: string | null;
   status: FeatureStatus;
   createdAt: string;
   updatedAt: string;
@@ -30,6 +31,7 @@ export interface Feature {
 export interface CreateFeatureBody {
   title: string;
   description: string;
+  ownerName?: string | null;
 }
 
 export interface Prd {

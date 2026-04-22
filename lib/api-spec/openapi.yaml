@@ -332,6 +332,9 @@ components:
           type: string
         description:
           type: string
+        ownerName:
+          type: string
+          nullable: true
         status:
           type: string
           enum: [pending, generating, completed, failed]
@@ -356,6 +359,9 @@ components:
           type: string
         description:
           type: string
+        ownerName:
+          type: string
+          nullable: true
       required:
         - title
         - description

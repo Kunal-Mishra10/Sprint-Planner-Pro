@@ -21,6 +21,7 @@ const statusLabels: Record<string, string> = {
 
 export default function Features() {
   const [search, setSearch] = useState("");
+  const [ownerFilter, setOwnerFilter] = useState("");
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
 
@@ -30,8 +31,16 @@ export default function Features() {
 
   const prdByFeatureId = new Map((prds || []).map(p => [p.featureId, p]));
 
+  const allOwners = Array.from(
+    new Set((features || []).map(f => f.ownerName).filter(Boolean) as string[])
+  ).sort();
+
   const filtered = (features || [])
-    .filter(f => !search || f.title.toLowerCase().includes(search.toLowerCase()) || f.description.toLowerCase().includes(search.toLowerCase()))
+    .filter(f => {
+      const matchesSearch = !search || f.title.toLowerCase().includes(search.toLowerCase()) || f.description.toLowerCase().includes(search.toLowerCase());
+      const matchesOwner = !ownerFilter || f.ownerName === ownerFilter;
+      return matchesSearch && matchesOwner;
+    })
     .slice()
     .reverse();
 
@@ -66,8 +75,8 @@ export default function Features() {
         </button>
       </div>
 
-      <div className="mb-5">
-        <div className="relative">
+      <div className="mb-5 flex gap-3">
+        <div className="relative flex-1">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -79,6 +88,18 @@ export default function Features() {
             className="w-full pl-10 pr-4 py-2.5 bg-card border border-card-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
           />
         </div>
+        {allOwners.length > 0 && (
+          <select
+            value={ownerFilter}
+            onChange={e => setOwnerFilter(e.target.value)}
+            className="pl-3 pr-8 py-2.5 bg-card border border-card-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent appearance-none cursor-pointer"
+          >
+            <option value="">All Owners</option>
+            {allOwners.map(owner => (
+              <option key={owner} value={owner}>{owner}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {isLoading ? (
@@ -113,6 +134,16 @@ export default function Features() {
                     <span className={cn("text-xs px-2 py-0.5 rounded border font-medium flex-shrink-0", statusColors[feature.status] || statusColors.pending)}>
                       {statusLabels[feature.status] || feature.status}
                     </span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-0.5">
+                    {feature.ownerName && (
+                      <span className="text-xs text-indigo-400 flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        {feature.ownerName}
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1 truncate">{feature.description}</p>
                   {prd && (

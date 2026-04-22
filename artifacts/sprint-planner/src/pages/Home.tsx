@@ -23,6 +23,7 @@ const statusLabels: Record<string, string> = {
 export default function Home() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [ownerName, setOwnerName] = useState("");
   const [generatingId, setGeneratingId] = useState<number | null>(null);
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -39,9 +40,16 @@ export default function Home() {
     if (!title.trim() || !description.trim()) return;
 
     try {
-      const feature = await createFeature.mutateAsync({ data: { title: title.trim(), description: description.trim() } });
+      const feature = await createFeature.mutateAsync({
+        data: {
+          title: title.trim(),
+          description: description.trim(),
+          ownerName: ownerName.trim() || null,
+        },
+      });
       setTitle("");
       setDescription("");
+      setOwnerName("");
       setGeneratingId(feature.id);
 
       queryClient.invalidateQueries({ queryKey: getListFeaturesQueryKey() });
@@ -75,6 +83,20 @@ export default function Home() {
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="e.g., Real-time collaboration for document editor"
+              disabled={isGenerating}
+              className="w-full px-3.5 py-2.5 bg-background border border-input rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Feature Owner <span className="text-muted-foreground font-normal">(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={ownerName}
+              onChange={e => setOwnerName(e.target.value)}
+              placeholder="e.g., Jane Smith"
               disabled={isGenerating}
               className="w-full px-3.5 py-2.5 bg-background border border-input rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             />
