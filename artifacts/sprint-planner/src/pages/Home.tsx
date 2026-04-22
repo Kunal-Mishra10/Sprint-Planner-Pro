@@ -62,7 +62,7 @@ export default function Home() {
   return (
     <div className="min-h-screen px-8 py-10 max-w-3xl mx-auto">
       <div className="mb-10">
-        <h1 className="text-3xl font-bold text-foreground tracking-tight">PRD Generator</h1>
+        <h1 className="text-3xl font-bold text-foreground tracking-tight">Sprint Planner</h1>
         <p className="mt-2 text-muted-foreground">Convert your feature idea into a structured product document, user stories, tasks, and sprint plan.</p>
       </div>
 

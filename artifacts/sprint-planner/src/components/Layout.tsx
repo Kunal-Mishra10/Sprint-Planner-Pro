@@ -53,7 +53,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             </div>
             <div>
               <p className="text-sm font-semibold text-sidebar-foreground leading-none">Sprint Planner</p>
-              <p className="text-xs text-muted-foreground mt-0.5">PRD Generator</p>
+              <p className="text-xs text-muted-foreground mt-0.5">AI-powered planning</p>
             </div>
           </div>
         </div>
