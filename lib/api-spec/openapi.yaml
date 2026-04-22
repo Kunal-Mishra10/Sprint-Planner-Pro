@@ -3,13 +3,25 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: PRD Sprint Planner API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: features
+    description: Feature idea management
+  - name: prds
+    description: PRD document management
+  - name: tasks
+    description: Task management
+  - name: sprints
+    description: Sprint management
+  - name: admin
+    description: Admin dashboard and monitoring
+  - name: ai
+    description: AI generation endpoints
 paths:
   /healthz:
     get:
@@ -24,6 +36,283 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /features:
+    get:
+      operationId: listFeatures
+      tags: [features]
+      summary: List all feature ideas
+      responses:
+        "200":
+          description: List of features
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Feature"
+    post:
+      operationId: createFeature
+      tags: [features]
+      summary: Create a new feature idea
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFeatureBody"
+      responses:
+        "201":
+          description: Feature created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Feature"
+
+  /features/{id}:
+    get:
+      operationId: getFeature
+      tags: [features]
+      summary: Get a feature by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Feature found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Feature"
+        "404":
+          description: Feature not found
+    delete:
+      operationId: deleteFeature
+      tags: [features]
+      summary: Delete a feature
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Feature deleted
+
+  /prds:
+    get:
+      operationId: listPrds
+      tags: [prds]
+      summary: List all PRDs
+      responses:
+        "200":
+          description: List of PRDs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Prd"
+
+  /prds/{id}:
+    get:
+      operationId: getPrd
+      tags: [prds]
+      summary: Get a PRD by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: PRD found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Prd"
+        "404":
+          description: PRD not found
+    delete:
+      operationId: deletePrd
+      tags: [prds]
+      summary: Delete a PRD
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: PRD deleted
+
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: List tasks, optionally filtered by PRD
+      parameters:
+        - name: prdId
+          in: query
+          required: false
+          schema:
+            type: ["integer", "null"]
+        - name: sprintId
+          in: query
+          required: false
+          schema:
+            type: ["integer", "null"]
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+
+  /tasks/{id}:
+    get:
+      operationId: getTask
+      tags: [tasks]
+      summary: Get a task by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Task found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Task not found
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      summary: Update a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTaskBody"
+      responses:
+        "200":
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /sprints:
+    get:
+      operationId: listSprints
+      tags: [sprints]
+      summary: List all sprints, optionally filtered by PRD
+      parameters:
+        - name: prdId
+          in: query
+          required: false
+          schema:
+            type: ["integer", "null"]
+      responses:
+        "200":
+          description: List of sprints
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sprint"
+
+  /sprints/{id}:
+    get:
+      operationId: getSprint
+      tags: [sprints]
+      summary: Get a sprint by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Sprint found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sprint"
+        "404":
+          description: Sprint not found
+
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Get admin dashboard statistics
+      responses:
+        "200":
+          description: Admin stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [admin]
+      summary: Get recent generation activity
+      responses:
+        "200":
+          description: Recent activity list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  /ai/generate-prd:
+    post:
+      operationId: generatePrd
+      tags: [ai]
+      summary: Generate a full PRD from a feature idea
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GeneratePrdBody"
+      responses:
+        "201":
+          description: PRD generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratePrdResponse"
+        "400":
+          description: Invalid request
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +323,293 @@ components:
       required:
         - status
 
+    Feature:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, generating, completed, failed]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - description
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateFeatureBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+      required:
+        - title
+        - description
+
+    Prd:
+      type: object
+      properties:
+        id:
+          type: integer
+        featureId:
+          type: integer
+        featureTitle:
+          type: string
+        overview:
+          type: string
+        goals:
+          type: string
+        userStories:
+          type: string
+        technicalRequirements:
+          type: string
+        successMetrics:
+          type: string
+        totalTasks:
+          type: integer
+        totalSprints:
+          type: integer
+        totalEffortPoints:
+          type: integer
+        riskScore:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - featureId
+        - featureTitle
+        - overview
+        - goals
+        - userStories
+        - technicalRequirements
+        - successMetrics
+        - totalTasks
+        - totalSprints
+        - totalEffortPoints
+        - riskScore
+        - createdAt
+        - updatedAt
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        prdId:
+          type: integer
+        sprintId:
+          type: ["integer", "null"]
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [user_story, engineering, bug, infrastructure, design]
+        priority:
+          type: string
+          enum: [critical, high, medium, low]
+        effortPoints:
+          type: integer
+        priorityScore:
+          type: number
+        riskLevel:
+          type: string
+          enum: [high, medium, low]
+        dependencies:
+          type: array
+          items:
+            type: integer
+        status:
+          type: string
+          enum: [backlog, in_sprint, in_progress, done]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - prdId
+        - title
+        - description
+        - type
+        - priority
+        - effortPoints
+        - priorityScore
+        - riskLevel
+        - dependencies
+        - status
+        - createdAt
+
+    UpdateTaskBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [backlog, in_sprint, in_progress, done]
+        priority:
+          type: string
+          enum: [critical, high, medium, low]
+        sprintId:
+          type: ["integer", "null"]
+
+    Sprint:
+      type: object
+      properties:
+        id:
+          type: integer
+        prdId:
+          type: integer
+        sprintNumber:
+          type: integer
+        name:
+          type: string
+        goal:
+          type: string
+        totalEffortPoints:
+          type: integer
+        taskCount:
+          type: integer
+        startDate:
+          type: ["string", "null"]
+          format: date-time
+        endDate:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - prdId
+        - sprintNumber
+        - name
+        - goal
+        - totalEffortPoints
+        - taskCount
+        - createdAt
+
+    AdminStats:
+      type: object
+      properties:
+        totalFeatures:
+          type: integer
+        totalPrds:
+          type: integer
+        totalTasks:
+          type: integer
+        totalSprints:
+          type: integer
+        avgTasksPerPrd:
+          type: number
+        avgSprintsPerPrd:
+          type: number
+        avgEffortPerPrd:
+          type: number
+        tasksByPriority:
+          type: object
+          properties:
+            critical:
+              type: integer
+            high:
+              type: integer
+            medium:
+              type: integer
+            low:
+              type: integer
+          required: [critical, high, medium, low]
+        tasksByType:
+          type: object
+          properties:
+            user_story:
+              type: integer
+            engineering:
+              type: integer
+            bug:
+              type: integer
+            infrastructure:
+              type: integer
+            design:
+              type: integer
+          required: [user_story, engineering, bug, infrastructure, design]
+        recentGenerations:
+          type: integer
+      required:
+        - totalFeatures
+        - totalPrds
+        - totalTasks
+        - totalSprints
+        - avgTasksPerPrd
+        - avgSprintsPerPrd
+        - avgEffortPerPrd
+        - tasksByPriority
+        - tasksByType
+        - recentGenerations
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        featureTitle:
+          type: string
+        prdId:
+          type: ["integer", "null"]
+        taskCount:
+          type: ["integer", "null"]
+        sprintCount:
+          type: ["integer", "null"]
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - featureTitle
+        - status
+        - createdAt
+
+    GeneratePrdBody:
+      type: object
+      properties:
+        featureId:
+          type: integer
+      required:
+        - featureId
+
+    GeneratePrdResponse:
+      type: object
+      properties:
+        prd:
+          $ref: "#/components/schemas/Prd"
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+        sprints:
+          type: array
+          items:
+            $ref: "#/components/schemas/Sprint"
+      required:
+        - prd
+        - tasks
+        - sprints
