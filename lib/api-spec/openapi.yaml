@@ -334,7 +334,6 @@ components:
           type: string
         ownerName:
           type: string
-          nullable: true
         status:
           type: string
           enum: [pending, generating, completed, failed]
@@ -348,6 +347,7 @@ components:
         - id
         - title
         - description
+        - ownerName
         - status
         - createdAt
         - updatedAt
@@ -361,10 +361,10 @@ components:
           type: string
         ownerName:
           type: string
-          nullable: true
       required:
         - title
         - description
+        - ownerName
 
     Prd:
       type: object

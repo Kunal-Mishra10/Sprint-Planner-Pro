@@ -37,14 +37,14 @@ export default function Home() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim() || !description.trim()) return;
+    if (!title.trim() || !description.trim() || !ownerName.trim()) return;
 
     try {
       const feature = await createFeature.mutateAsync({
         data: {
           title: title.trim(),
           description: description.trim(),
-          ownerName: ownerName.trim() || null,
+          ownerName: ownerName.trim(),
         },
       });
       setTitle("");
@@ -89,9 +89,7 @@ export default function Home() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">
-              Feature Owner <span className="text-muted-foreground font-normal">(optional)</span>
-            </label>
+            <label className="block text-sm font-medium text-foreground mb-1.5">Feature Owner</label>
             <input
               type="text"
               value={ownerName}
@@ -116,7 +114,7 @@ export default function Home() {
 
           <button
             type="submit"
-            disabled={!title.trim() || !description.trim() || isGenerating}
+            disabled={!title.trim() || !description.trim() || !ownerName.trim() || isGenerating}
             className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-lg text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isGenerating ? (

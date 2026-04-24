@@ -22,7 +22,7 @@ export const ListFeaturesResponseItem = zod.object({
   id: zod.number(),
   title: zod.string(),
   description: zod.string(),
-  ownerName: zod.string().nullish(),
+  ownerName: zod.string(),
   status: zod.enum(["pending", "generating", "completed", "failed"]),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
@@ -35,7 +35,7 @@ export const ListFeaturesResponse = zod.array(ListFeaturesResponseItem);
 export const CreateFeatureBody = zod.object({
   title: zod.string(),
   description: zod.string(),
-  ownerName: zod.string().nullish(),
+  ownerName: zod.string(),
 });
 
 /**
@@ -49,7 +49,7 @@ export const GetFeatureResponse = zod.object({
   id: zod.number(),
   title: zod.string(),
   description: zod.string(),
-  ownerName: zod.string().nullish(),
+  ownerName: zod.string(),
   status: zod.enum(["pending", "generating", "completed", "failed"]),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
