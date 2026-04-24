@@ -1,7 +1,7 @@
 import { useGetAdminStats, useGetRecentActivity, useListPrds, useListFeatures } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import {
-  BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
+  BarChart, Bar, LabelList, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import { cn } from "@/lib/utils";
 
@@ -115,7 +115,7 @@ export default function Admin() {
               <div className="bg-card border border-card-border rounded-xl p-5">
                 <h3 className="text-sm font-semibold text-foreground mb-4">Tasks by Type</h3>
                 <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={typeData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                  <BarChart data={typeData} margin={{ top: 24, right: 10, bottom: 5, left: 0 }}>
                     <XAxis dataKey="name" tick={{ fill: "hsl(213 20% 55%)", fontSize: 11 }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fill: "hsl(213 20% 55%)", fontSize: 11 }} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={{ background: "hsl(226 24% 11%)", border: "1px solid hsl(226 18% 18%)", borderRadius: "8px", color: "hsl(213 31% 91%)" }} />
@@ -123,6 +123,11 @@ export default function Admin() {
                       {typeData.map((_, i) => (
                         <Cell key={i} fill={TYPE_COLORS[i % TYPE_COLORS.length]} />
                       ))}
+                      <LabelList
+                        dataKey="value"
+                        position="top"
+                        style={{ fill: "#ffffff", fontSize: 12, fontWeight: 700 }}
+                      />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
