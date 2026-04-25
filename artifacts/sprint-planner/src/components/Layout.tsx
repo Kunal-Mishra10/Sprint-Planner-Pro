@@ -52,7 +52,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-sidebar-foreground leading-none">Sprint Generator</p>
+              <p className="text-sm font-semibold text-sidebar-foreground leading-none">Sprint Planner</p>
               <p className="text-xs text-muted-foreground mt-0.5">AI-powered planning</p>
             </div>
           </div>
