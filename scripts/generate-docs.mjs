@@ -1,5 +1,6 @@
 import PDFDocument from "pdfkit";
 import fs from "fs";
+import { execSync } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -22,6 +23,31 @@ const COLORS = {
   high: "#f97316",
   medium: "#3b82f6",
   low: "#94a3b8",
+};
+
+// Read git history dynamically so the document never drifts from real commits
+const gitLog = execSync('git log --pretty=format:"%h|%as|%s"', { cwd: path.join(__dirname, ".."), encoding: "utf8" })
+  .trim()
+  .split("\n")
+  .map(line => {
+    const parts = line.split("|");
+    return { hash: parts[0], date: parts[1], message: parts.slice(2).join("|") };
+  });
+
+const COMMIT_NARRATIVES = {
+  "8337c4b": "Project scaffolded: pnpm monorepo structure, Vite + React frontend, Express backend skeleton, PostgreSQL connection, Drizzle ORM setup, base Tailwind configuration.",
+  "dcdacce": "Full implementation: Drizzle schemas (features, prds, tasks, sprints), all API routes, OpenAI gpt-5.4 integration with JSON response_format, priority/risk scoring functions, full React frontend (4 pages, Layout, dark indigo/slate theme, Recharts admin charts).",
+  "fc6c308": "Renamed heading from 'PRD Generator' to 'Sprint Planner'. Sidebar subtitle changed from 'Sprint Planner' (duplicate) to 'AI-powered planning'.",
+  "24fb9b9": "Added ownerName field to features table (nullable at this stage), OpenAPI spec update, codegen run, frontend form (optional field), Features page owner display + dropdown filter, Admin dashboard Features by Owner table and grouped bar chart.",
+  "8c966f1": "Changed owner_name column to NOT NULL. Existing null rows backfilled with 'Unassigned'. Updated OpenAPI spec (required field), regenerated Zod schemas, removed 'optional' label from form, added ownerName to button disabled condition.",
+  "a29fb75": "Added LabelList component to the Tasks by Type BarChart with position='top', white bold text. Increased chart top margin from 5px to 24px to give value labels clearance above the bars.",
+  "2f5c62a": "Production deployment checkpoint — app published to Replit hosting.",
+  "261cec4": "Renamed 'Sprint Planner' to 'Sprint Generator' in Layout.tsx and Home.tsx headings.",
+  "c960e3f": "Second production deployment checkpoint.",
+  "7cbc8d5": "Reverted the name back from 'Sprint Generator' to 'Sprint Planner' in both Layout.tsx and Home.tsx.",
+  "9138818": "Third production deployment checkpoint.",
+  "3488519": "Repository housekeeping: transitioned from planning to build mode — no application code changed.",
+  "a29201a": "Added scripts/generate-docs.mjs (pdfkit-based PDF generator) and installed pdfkit as a root devDependency. Output written to docs/sprint-planner-documentation.pdf.",
 };
 
 const doc = new PDFDocument({
@@ -476,7 +502,7 @@ const routeRows = [
   ["GET",    "/api/features",              "List all features ordered by createdAt"],
   ["POST",   "/api/features",              "Create feature (title, ownerName, description)"],
   ["GET",    "/api/features/:id",          "Get single feature by ID"],
-  ["DELETE", "/api/features/:id",          "Delete feature (and cascade via app logic)"],
+  ["DELETE", "/api/features/:id",          "Delete feature row (related PRDs/tasks not auto-deleted)"],
   ["GET",    "/api/prds",                  "List all PRDs"],
   ["GET",    "/api/prds/:id",              "Get single PRD by ID"],
   ["GET",    "/api/tasks",                 "List tasks, filterable by ?prdId="],
@@ -594,10 +620,15 @@ body(
 
 h2("4.1 Entity Relationships");
 
-body("The relationships follow a linear chain:");
+body(
+  "The schemas do not declare explicit PostgreSQL foreign key constraints via Drizzle's " +
+  ".references() helper. Referential integrity is enforced at the application level: routes " +
+  "check parent existence before inserting child rows, and the AI generation endpoint manages " +
+  "the insertion order explicitly. The logical relationships are:"
+);
 code(`features (1) ──► prds (1) ──► tasks (N)
                           └──► sprints (N)
-tasks.sprint_id ──► sprints.id  (optional)`);
+tasks.sprint_id ──► sprints.id  (optional, null = unassigned)`);
 
 h2("4.2 Table: features");
 muted("Core record for each feature idea submitted by a user.");
@@ -778,23 +809,12 @@ body(
 
 doc.moveDown(0.5);
 
-const commits = [
-  ["8337c4b", "2026-04-18", "Initial commit", "Project scaffolded: pnpm monorepo structure, Vite + React frontend, Express backend skeleton, PostgreSQL connection, Drizzle ORM setup, base Tailwind config."],
-  ["dcdacce", "2026-04-22", "Add core functionality for generating sprint plans from feature ideas", "Full implementation: Drizzle schemas (features, prds, tasks, sprints), all API routes, OpenAI gpt-5.4 integration with JSON response format, priority/risk scoring functions, full React frontend (4 pages, Layout, dark indigo/slate theme, Recharts admin charts)."],
-  ["fc6c308", "2026-04-22", "Update application name to Sprint Planner and improve sidebar subtitle", "Renamed heading from 'PRD Generator' to 'Sprint Planner'. Sidebar subtitle changed from 'Sprint Planner' (duplicate) to 'AI-powered planning'."],
-  ["24fb9b9", "2026-04-22", "Add feature owner tracking and reporting capabilities", "Added ownerName field to features table (nullable at this stage), OpenAPI spec, codegen, frontend form (optional field), Features page owner display + dropdown filter, Admin dashboard Features by Owner table and chart."],
-  ["8c966f1", "2026-04-24", "Make the Feature Owner field a mandatory requirement", "Changed owner_name column to NOT NULL. Backfilled existing null rows with 'Unassigned'. Updated OpenAPI spec (required field), regenerated Zod schemas, removed 'optional' label from form, added ownerName to button disabled condition."],
-  ["a29fb75", "2026-04-24", "Add task counts above bars in admin dashboard", "Added LabelList component to the Tasks by Type BarChart with position='top', white bold text. Increased chart top margin from 5px to 24px to give value labels clearance."],
-  ["2f5c62a", "2026-04-24", "Published your App", "Production deployment checkpoint — app published to Replit hosting."],
-  ["261cec4", "2026-04-24", "Update the application name from Sprint Planner to Sprint Generator", "Renamed 'Sprint Planner' to 'Sprint Generator' in Layout.tsx and Home.tsx."],
-  ["c960e3f", "2026-04-24", "Published your App", "Second production deployment checkpoint."],
-  ["7cbc8d5", "2026-04-25", "Rename the application to Sprint Planner", "Reverted the name back from 'Sprint Generator' to 'Sprint Planner' in both files."],
-  ["9138818", "2026-04-25", "Published your App", "Third production deployment checkpoint."],
-];
+const commits = [...gitLog].reverse();
 
 commits.forEach((commit, idx) => {
+  const { hash, date, message } = commit;
+  const narrative = COMMIT_NARRATIVES[hash] || "See commit diff for full details.";
   checkPageBreak(55);
-  const [hash, date, message, narrative] = commit;
   const y = doc.y;
   const isEven = idx % 2 === 0;
   const rowBg = isEven ? "#f8fafc" : "#ffffff";
