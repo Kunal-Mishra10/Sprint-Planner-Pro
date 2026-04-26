@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "QJ7bt3ZQlRH68c9KOTVty"
+uri = "file://docs/sprint-planner-documentation.pdf"
+type = "pdf"
+title = "Sprint Planner — Application Documentation"
