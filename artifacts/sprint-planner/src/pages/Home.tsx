@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useCreateFeature, useGeneratePrd, useListFeatures, useDeleteFeature } from "@workspace/api-client-react";
+import { useCreateFeature, useGeneratePrd, useListFeatures, useListPrds, useDeleteFeature } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListFeaturesQueryKey } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
@@ -43,9 +43,26 @@ export default function Home() {
   const queryClient = useQueryClient();
 
   const { data: features, isLoading: featuresLoading } = useListFeatures();
+  const { data: prds } = useListPrds();
   const createFeature = useCreateFeature();
   const generatePrd = useGeneratePrd();
   const deleteFeature = useDeleteFeature();
+
+  const prdByFeatureId = new Map((prds || []).map(p => [p.featureId, p]));
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("title");
+    const d = params.get("desc");
+    const o = params.get("owner");
+    if (t || d || o) {
+      if (t) setTitle(t);
+      if (d) setDescription(d);
+      if (o) setOwnerName(o);
+      window.history.replaceState({}, "", window.location.pathname);
+      toast({ title: "Inputs restored", description: "The form has been pre-filled from the selected past plan." });
+    }
+  }, []);
 
   const isGenerating = generatingId !== null;
 
@@ -193,19 +210,53 @@ export default function Home() {
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Recent Plans</h2>
           <div className="space-y-2">
-            {completedFeatures.slice().reverse().slice(0, 5).map(feature => (
-              <div key={feature.id} className="group bg-card border border-card-border rounded-xl px-4 py-3 flex items-center justify-between hover:border-primary/30 transition-colors">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{feature.title}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{new Date(feature.createdAt).toLocaleDateString()}</p>
+            {completedFeatures.slice().reverse().slice(0, 5).map(feature => {
+              const prd = prdByFeatureId.get(feature.id);
+              return (
+                <div
+                  key={feature.id}
+                  onClick={() => prd && navigate(`/results/${prd.id}`)}
+                  className={cn(
+                    "group bg-card border border-card-border rounded-xl px-4 py-3 flex items-center justify-between transition-colors",
+                    prd ? "cursor-pointer hover:border-primary/30" : "cursor-default",
+                  )}
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{feature.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-xs text-muted-foreground">{new Date(feature.createdAt).toLocaleDateString()}</p>
+                      {prd && (
+                        <>
+                          <span className="text-xs text-muted-foreground">·</span>
+                          <span className="text-xs text-blue-400">{prd.totalTasks} tasks</span>
+                          <span className="text-xs text-muted-foreground">·</span>
+                          <span className="text-xs text-violet-400">{prd.totalSprints} sprints</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        navigate(`/?title=${encodeURIComponent(feature.title)}&desc=${encodeURIComponent(feature.description)}&owner=${encodeURIComponent(feature.ownerName || "")}`);
+                      }}
+                      title="Reuse these inputs"
+                      className="p-1.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                    {prd && (
+                      <svg className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 ml-4 flex-shrink-0">
-                  <span className={cn("px-2 py-0.5 rounded text-xs font-medium border", statusColors[feature.status] || statusColors.pending)}>
-                    {statusLabels[feature.status] || feature.status}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ) : !featuresLoading && (features || []).length === 0 ? (

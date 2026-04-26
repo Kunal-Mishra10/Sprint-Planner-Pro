@@ -156,21 +156,34 @@ export default function Features() {
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-                  <span className="text-xs text-muted-foreground">{new Date(feature.createdAt).toLocaleDateString()}</span>
-                  {feature.status === "completed" && (
-                    <svg className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <div className="flex items-center gap-1 ml-4 flex-shrink-0">
+                  <span className="text-xs text-muted-foreground mr-1">{new Date(feature.createdAt).toLocaleDateString()}</span>
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      navigate(`/?title=${encodeURIComponent(feature.title)}&desc=${encodeURIComponent(feature.description)}&owner=${encodeURIComponent(feature.ownerName || "")}`);
+                    }}
+                    title="Reuse these inputs in generator"
+                    className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
-                  )}
+                  </button>
                   <button
                     onClick={e => handleDelete(feature.id, e)}
+                    title="Delete"
                     className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
+                  {feature.status === "completed" && (
+                    <svg className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
                 </div>
               </div>
             );
