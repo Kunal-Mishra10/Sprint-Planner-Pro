@@ -1,10 +1,23 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useCreateFeature, useGeneratePrd, useListFeatures } from "@workspace/api-client-react";
+import { useCreateFeature, useGeneratePrd, useListFeatures, useDeleteFeature } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListFeaturesQueryKey } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+
+interface ApiErrorData {
+  error?: string;
+  code?: string;
+  hint?: string;
+}
+
+function extractApiError(err: unknown): { status: number; data: ApiErrorData } | null {
+  if (err && typeof err === "object" && "status" in err && "data" in err) {
+    return err as { status: number; data: ApiErrorData };
+  }
+  return null;
+}
 
 const statusColors: Record<string, string> = {
   pending: "text-amber-400 bg-amber-400/10 border-amber-400/20",
@@ -32,6 +45,7 @@ export default function Home() {
   const { data: features, isLoading: featuresLoading } = useListFeatures();
   const createFeature = useCreateFeature();
   const generatePrd = useGeneratePrd();
+  const deleteFeature = useDeleteFeature();
 
   const isGenerating = generatingId !== null;
 
@@ -39,8 +53,10 @@ export default function Home() {
     e.preventDefault();
     if (!title.trim() || !description.trim() || !ownerName.trim()) return;
 
+    let feature: Awaited<ReturnType<typeof createFeature.mutateAsync>> | null = null;
+
     try {
-      const feature = await createFeature.mutateAsync({
+      feature = await createFeature.mutateAsync({
         data: {
           title: title.trim(),
           description: description.trim(),
@@ -58,10 +74,26 @@ export default function Home() {
       setGeneratingId(null);
       queryClient.invalidateQueries({ queryKey: getListFeaturesQueryKey() });
       navigate(`/results/${result.prd.id}`);
-    } catch {
+    } catch (err) {
       setGeneratingId(null);
-      queryClient.invalidateQueries({ queryKey: getListFeaturesQueryKey() });
-      toast({ title: "Generation failed", description: "Failed to generate PRD. Please try again.", variant: "destructive" });
+
+      const apiErr = extractApiError(err);
+      if (apiErr?.status === 422 && apiErr.data?.code === "INVALID_FEATURE_TOPIC" && feature) {
+        deleteFeature.mutate({ id: feature.id }, {
+          onSettled: () => queryClient.invalidateQueries({ queryKey: getListFeaturesQueryKey() }),
+        });
+        toast({
+          title: "Not a software feature",
+          description: apiErr.data.hint
+            ? `${apiErr.data.error} ${apiErr.data.hint}`
+            : apiErr.data.error ?? "Please describe a software feature your team wants to build.",
+          variant: "destructive",
+          duration: 8000,
+        });
+      } else {
+        queryClient.invalidateQueries({ queryKey: getListFeaturesQueryKey() });
+        toast({ title: "Generation failed", description: "Failed to generate PRD. Please try again.", variant: "destructive" });
+      }
     }
   }
 

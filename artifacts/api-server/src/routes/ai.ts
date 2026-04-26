@@ -69,6 +69,45 @@ router.post("/ai/generate-prd", async (req, res): Promise<void> => {
     return;
   }
 
+  // Pre-screen: confirm the input describes a software / technology product feature
+  try {
+    const screenCompletion = await openai.chat.completions.create({
+      model: "gpt-5.4",
+      max_completion_tokens: 100,
+      messages: [
+        {
+          role: "user",
+          content: `You are a gatekeeper for a sprint planning tool used exclusively by technology teams building software products and systems.
+
+Determine whether the following input describes a legitimate software feature, technical capability, or product improvement that a technology team could build and plan sprints for.
+
+Title: ${feature.title}
+Description: ${feature.description}
+
+Respond with JSON only:
+{"valid": true} — if this is a genuine software/tech product feature
+{"valid": false, "reason": "one-sentence plain-English explanation"} — if this is NOT a software feature (e.g. general knowledge questions, trivia, non-technical requests, factual lookups)`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const screenContent = screenCompletion.choices[0]?.message?.content ?? '{"valid":true}';
+    const screen = JSON.parse(screenContent) as { valid: boolean; reason?: string };
+
+    if (!screen.valid) {
+      const reason = screen.reason ?? "This doesn't appear to be a software product feature.";
+      res.status(422).json({
+        error: reason,
+        code: "INVALID_FEATURE_TOPIC",
+        hint: "Sprint Planner is designed for technology teams building software products. Please describe a feature, capability, or system improvement your team wants to build.",
+      });
+      return;
+    }
+  } catch (screenErr) {
+    logger.warn({ screenErr }, "Feature screening call failed — proceeding with generation");
+  }
+
   await db
     .update(featuresTable)
     .set({ status: "generating" })
